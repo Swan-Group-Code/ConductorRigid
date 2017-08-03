@@ -711,7 +711,7 @@ __global__ void sum_charges( Scalar *d_bead_charge, // bead charges
 	}
 
 	// Reduction to add all of the bead charges
-	int offs = rigid_size;
+	int offs = ( rigid_size < block_size ) ? rigid_size : block_size;
 	int oldoffs;
 	while ( offs > 1){
 		oldoffs = offs; // store the previous value of offs
@@ -1002,13 +1002,13 @@ cudaError_t MatrixVectorMultiply(   	Scalar4 *d_bead_pos, // particle posisitons
 	PotentialChargeMultiply(d_bead_pos, d_bead_charge, d_isolated_potential, d_group_membership, d_group_members, d_isolated_membership,
 				box, group_size, block_size, d_phiq, xi, eta, rc, Nx, Ny, Nz, gridh, P, d_qgrid, d_scale_phiq, plan, N_table,
 				drtable, d_phiq_table, d_nlist, d_head_list, d_n_neigh);
-
+	gpuErrchk(cudaPeekAtLastError());
 	// Sum the charges on a single rigid body.  Use one block per rigid body and the smaller of (Nmax, max_block_size) threads per block.
 	int N_block = N_rigid;
 	int N_thread = (max_rigid_size < max_block_size) ? max_rigid_size : max_block_size;
 	sum_charges<<<N_block, N_thread, N_thread*sizeof(float)>>>(d_bead_charge, d_isolated_charge, d_isolated_membership, d_rigid_members,
 								   d_rigid_size, max_rigid_size);
-
+	gpuErrchk(cudaPeekAtLastError());
 	// Set the isolated body charges. Use one thread per particle in the active group.
 	N_block = (group_size/block_size) + 1;
 	N_thread = block_size;
@@ -1037,7 +1037,7 @@ cudaError_t Precondition(	Scalar *d_input,  // input to preconditioner (bead cha
 	// Use one thread per input/output entry
 	int N_block = (group_size + N_isolated)/block_size + 1;
 	precondition<<<N_block, block_size>>>(d_input, d_output, d_isolated_membership, d_rigid_members, d_rigid_size, group_size, N_rigid,
-					      N_isolated, max_rigid_size, block_size);
+					      N_isolated, max_rigid_size);
     	
 	gpuErrchk(cudaPeekAtLastError());
     	return cudaSuccess;

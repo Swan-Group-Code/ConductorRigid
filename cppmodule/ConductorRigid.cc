@@ -488,7 +488,7 @@ void ConductorRigid::computeForces(unsigned int timestep) {
 
 	// set the block size of normal GPU kernels and the maximum block size for kernels requiring shared memory
 	int block_size = 512;
-	int max_block_size = 12000; // (for 48kB max shared memory and 4B per float)
+	int max_block_size = 1024;  // limit for current hardware
 
 	// perform the calculation on the GPU
 	gpu_ComputeForce(d_bead_pos.data,
