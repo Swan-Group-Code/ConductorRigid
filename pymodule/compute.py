@@ -57,7 +57,7 @@ class ConductorRigid(_force):
     # Update simulation parameters.
     def update_parameters(self, field, fileprefix, period):
 	self.cpp_force.UpdateParams(field, fileprefix, period, globals.system.getCurrentTimeStep());
-	self.cpp_forc.SetParams();
+	self.cpp_force.SetParams();
 
     # The integrator calls the update_coeffs function but there are no coefficients to update, so this function does nothing
     def update_coeffs(self):
